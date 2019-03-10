@@ -1,0 +1,135 @@
+---
+title: "Sampling from Gaussian Process"
+output: html_document
+---
+
+```{r}
+library(mvtnorm)
+
+d_euclid <- function(x,x_p){
+  return(abs(x-x_p))
+}
+se_cov <- function(tao_2_1,tao_2_2,b,d_func,x){
+  Sigma <- matrix(NA,length(x),length(x))
+  for(i in 1:length(x)){
+    for(j in 1:length(x)){
+      Sigma[i,j] <- tao_2_1*exp(-(1/2)*(d_func(x[i],x[j])/b)^2)+tao_2_2*(x[i]==x[j])
+    }
+  }
+  return(Sigma)
+}
+get_f_samples <- function(x,b,tao_2_1,tao_2_2,d_func,cov_func,n_samples){
+  m_x <- rep(0,length(x))
+  Sigma <- cov_func(tao_2_1,tao_2_2,b,d_euclid,x) 
+  
+  mat_f <- matrix(NA,nrow= n,ncol=n_samples)
+  for(i in 1:n_samples){
+    mat_f[,i] <- rmvnorm(1,mean=m_x,sigma=Sigma)
+  }
+  return(mat_f)
+}
+n_samples <- 10
+n <-100
+x <- runif(n,0,1)
+tao_2_2 <- 1e-06
+idx_x <- order(x)
+
+```
+
+
+##Square Exponential Covariance Function
+
+###High b/High tao_1
+```{r}
+
+high_b_high_t1 <- get_f_samples(x,b=1,2,tao_2_2,d_euclid,se_cov,n_samples)
+plot(1, type="n", xlab="", ylab="", xlim=c(0, 1), ylim=c(-5,5))
+for(i in 1:n_samples){
+  lines(x[idx_x],high_b_high_t1[,i][idx_x],col=i,lwd=1.5)
+}
+```
+
+###Low b/Low tao_1
+
+```{r}
+low_b_low_t1 <- get_f_samples(x,b=0.01,0.1,tao_2_2,d_euclid,se_cov,n_samples)
+plot(1, type="n", xlab="", ylab="", xlim=c(0, 1), ylim=c(-5,5))
+for(i in 1:n_samples){
+  lines(x[idx_x],low_b_low_t1[,i][idx_x],col=i,lwd=1.5)
+}
+```
+
+
+###High b/Low tao_1
+
+```{r}
+high_b_low_t1 <- get_f_samples(x,b=1,0.1,tao_2_2,d_euclid,se_cov,n_samples)
+plot(1, type="n", xlab="", ylab="", xlim=c(0, 1), ylim=c(-5,5))
+for(i in 1:n_samples){
+  lines(x[idx_x],high_b_low_t1[,i][idx_x],col=i,lwd=1.5)
+}
+```
+
+###Low b/High tao_1
+
+```{r}
+low_b_high_t1 <- get_f_samples(x,b=0.01,2,tao_2_2,d_euclid,se_cov,n_samples)
+plot(1, type="n", xlab="", ylab="", xlim=c(0, 1), ylim=c(-5,5))
+for(i in 1:n_samples){
+  lines(x[idx_x],low_b_high_t1[,i][idx_x],col=i,lwd=1.5)
+}
+```
+
+
+##Matern 52
+```{r}
+matern_52_cov <-  function(tao_2_1,tao_2_2,b,d_func,x){
+  Sigma <- matrix(NA,length(x),length(x))
+  for(i in 1:length(x)){
+    for(j in 1:length(x)){
+      d <- d_func(x[i],x[j])
+      Sigma[i,j] <- tao_2_1*(1+sqrt(5)*(d/b)+(5/3)*(d/b)^2)*exp(-sqrt(5)*(d/b))+ tao_2_2*(x[i]==x[j])
+    }
+  }
+  return(Sigma)
+}
+```
+
+
+###High b/High tao_1
+```{r}
+
+high_b_high_t1 <- get_f_samples(x,b=1,2,tao_2_2,d_euclid,matern_52_cov,n_samples)
+plot(1, type="n", xlab="", ylab="", xlim=c(0, 1), ylim=c(-5,5))
+for(i in 1:n_samples){
+  lines(x[idx_x],high_b_high_t1[,i][idx_x],col=i,lwd=1.5)
+}
+```
+
+###Low b/Low tao_1
+```{r}
+low_b_low_t1 <- get_f_samples(x,b=0.01,0.1,tao_2_2,d_euclid,matern_52_cov,n_samples)
+plot(1, type="n", xlab="", ylab="", xlim=c(0, 1), ylim=c(-5,5))
+for(i in 1:n_samples){
+  lines(x[idx_x],low_b_low_t1[,i][idx_x],col=i,lwd=1.5)
+}
+```
+
+
+###High b/Low tao_1
+```{r}
+high_b_low_t1 <- get_f_samples(x,b=1,0.1,tao_2_2,d_euclid,matern_52_cov,n_samples)
+plot(1, type="n", xlab="", ylab="", xlim=c(0, 1), ylim=c(-5,5))
+for(i in 1:n_samples){
+  lines(x[idx_x],high_b_low_t1[,i][idx_x],col=i,lwd=1.5)
+}
+```
+
+###Low b/High tao_1
+```{r}
+low_b_high_t1 <- get_f_samples(x,b=0.01,2,tao_2_2,d_euclid,matern_52_cov,n_samples)
+plot(1, type="n", xlab="", ylab="", xlim=c(0, 1), ylim=c(-5,5))
+for(i in 1:n_samples){
+  lines(x[idx_x],low_b_high_t1[,i][idx_x],col=i,lwd=1.5)
+}
+```
